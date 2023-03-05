@@ -1,29 +1,41 @@
 class Solution {
-    record Node(int i, int t) {}
-    public int networkDelayTime(int[][] times, int n, int k) {
-        // create graph
-        List<Node>[] g = new List[n];
-        for (int i = 0; i < n; i++) g[i] = new ArrayList<>();
-        for (var t : times) g[t[0]-1].add(new Node(t[1]-1, t[2]));
-
-        int[] time = new int[n];
-        Queue<Integer> q = new PriorityQueue<>((u, v) -> time[u]-time[v]);
-        Arrays.fill(time, Integer.MAX_VALUE);
-        time[--k] = 0;
-        q.offer(k);
-
-        while (!q.isEmpty()) {
-            var cur = q.poll();
-            for (var next : g[cur]) {
-                int t2 = time[cur] + next.t;
-                if (t2 >= time[next.i]) continue;
-                time[next.i] = t2;
-                q.offer(next.i);
+    public int networkDelayTime(int[][] times, int n, int K) {
+        int[][] graph = new int[n][n];
+        for(int i = 0; i < n ; i++) Arrays.fill(graph[i], Integer.MAX_VALUE);
+        for( int[] rows : times) graph[rows[0] - 1][rows[1] - 1] =  rows[2];        
+        
+        int[] distance = new int[n];
+        Arrays.fill(distance, Integer.MAX_VALUE);
+        distance[K - 1] = 0;
+        
+        boolean[] visited = new boolean[n];
+        for(int i = 0; i < n ; i++){
+            int v = minIndex(distance, visited);
+            if(v == -1)continue;
+            visited[v] = true;
+            for(int j = 0; j < n; j++){
+                if(graph[v][j] != Integer.MAX_VALUE){
+                    int newDist = graph[v][j] + distance[v];
+                    if(newDist < distance[j]) distance[j] = newDist;
+                }
             }
         }
-
-        int res = time[0];
-        for (var t : time) if (t == Integer.MAX_VALUE) return -1; else if (t > res) res = t;
-        return res;
+        int result = 0;
+        for(int dist : distance){
+            if(dist == Integer.MAX_VALUE) return -1;
+            result = Math.max(result, dist);
+        }
+        return result;
+    }
+	
+    private int minIndex(int[] distance, boolean[] visited){
+        int min = Integer.MAX_VALUE, minIndex = -1;
+        for(int i = 0; i < distance.length; i++){
+            if(!visited[i] && distance[i] < min){
+                min = distance[i];
+                minIndex = i;
+            }
+        }
+        return minIndex;
     }
 }
